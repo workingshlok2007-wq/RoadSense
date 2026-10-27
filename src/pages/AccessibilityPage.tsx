@@ -1,3 +1,50 @@
-import { Eye, Keyboard, Volume2, Gauge } from 'lucide-react'
-import { Card, Heading } from '../components/ui'
-export default function AccessibilityPage(){return <><Heading sub="Inclusive access is a core public service requirement">Accessibility statement</Heading><div className="access-grid">{[[Eye,'Perceivable','High-contrast text, labeled status indicators, and non-color severity symbols.'],[Keyboard,'Operable','All controls and navigation are keyboard accessible with visible focus rings.'],[Volume2,'Understandable','Plain-language labels and polite live-region updates for telemetry.'],[Gauge,'Motion aware','Animation is reduced or removed when your device requests reduced motion.']].map(([I,t,d]:any)=><Card key={t}><I/><h2>{t}</h2><p>{d}</p></Card>)}</div><Card><h2>Conformance goal</h2><p>RoadSense targets WCAG 2.2 Level AA. This prototype includes semantic landmarks, a skip link, responsive layouts, accessible form labels, and text equivalents for charts and map status. For assistance, contact your municipal accessibility office.</p></Card></>}
+import { Eye, Keyboard, Volume2, Gauge } from "lucide-react"
+import { Card, Heading } from "../components/ui"
+export default function AccessibilityPage() {
+  return (
+    <>
+      <Heading sub="Inclusive access is a core public service requirement">
+        Accessibility statement
+      </Heading>
+      <div className="access-grid">
+        {[
+          [
+            Eye,
+            "Perceivable",
+            "High-contrast text, labeled status indicators, and non-color severity symbols.",
+          ],
+          [
+            Keyboard,
+            "Operable",
+            "All controls and navigation are keyboard accessible with visible focus rings.",
+          ],
+          [
+            Volume2,
+            "Understandable",
+            "Plain-language labels and polite live-region updates for telemetry.",
+          ],
+          [
+            Gauge,
+            "Motion aware",
+            "Animation is reduced or removed when your device requests reduced motion.",
+          ],
+        ].map(([I, t, d]: any) => (
+          <Card key={t}>
+            <I />
+            <h2>{t}</h2>
+            <p>{d}</p>
+          </Card>
+        ))}
+      </div>
+      <Card>
+        <h2>Conformance goal</h2>
+        <p>
+          RoadSense targets WCAG 2.2 Level AA. This prototype includes semantic
+          landmarks, a skip link, responsive layouts, accessible form labels,
+          and text equivalents for charts and map status. For assistance,
+          contact your municipal accessibility office.
+        </p>
+      </Card>
+    </>
+  )
+}

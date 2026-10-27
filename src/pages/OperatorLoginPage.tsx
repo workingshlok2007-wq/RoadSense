@@ -1,12 +1,119 @@
-import { useState } from 'react'
-import { ArrowLeft, Building2, Eye, EyeOff, ShieldCheck } from 'lucide-react'
-import { Link, useNavigate } from 'react-router'
-import { useAuth } from '../context/AuthContext'
-import { Button } from '../components/ui'
+import { useState } from "react"
+import { ArrowLeft, Building2, Eye, EyeOff, ShieldCheck } from "lucide-react"
+import { Link, useNavigate } from "react-router"
+import { useAuth } from "../context/AuthContext"
+import { Button } from "../components/ui"
 
-export default function OperatorLoginPage(){
- const {login}=useAuth(),navigate=useNavigate()
- const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[show,setShow]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(false)
- const submit=(event:React.FormEvent)=>{event.preventDefault();setError('');if(!email||!password){setError('Enter your official email and password.');return}setLoading(true);setTimeout(()=>{if(email==='operator@roadsense.gov'&&password==='Operator@123'){login('operator','Municipal Operator');navigate('/map')}else{setError('Invalid official email or password.');setLoading(false)}},500)}
- return <div className="operator-login"><section className="operator-brand-panel"><div className="brand"><span>RS</span><div><b>RoadSense</b><small>Municipal command</small></div></div><div><Building2/><p className="eyebrow">Authorized personnel</p><h1>Road maintenance intelligence for faster civic response.</h1><p>Secure access to operations, AI triage, SLA accountability and corridor planning.</p></div><span><ShieldCheck/>Municipal systems · Secure prototype</span></section><main><Link className="back-link" to="/"><ArrowLeft/>Back to public reporting</Link><div className="operator-form"><p className="eyebrow">Operator access</p><h1>Sign in to command</h1><p>Use your official municipal credentials.</p><form className="login-form" onSubmit={submit}><label>Official email<input type="email" autoComplete="username" value={email} onChange={event=>setEmail(event.target.value)} placeholder="name@roadsense.gov"/></label><label>Password<div className="password-field"><input type={show?'text':'password'} autoComplete="current-password" value={password} onChange={event=>setPassword(event.target.value)} placeholder="Enter password"/><button type="button" onClick={()=>setShow(!show)} aria-label={show?'Hide password':'Show password'}>{show?<EyeOff/>:<Eye/>}</button></div></label><a className="forgot-link" href="#forgot">Forgot password?</a><div className="login-error" aria-live="polite">{error}</div><Button type="submit" disabled={loading}>{loading?'Signing in…':'Sign in'}</Button></form><details className="demo-access"><summary>Demo access</summary><p><b>Email:</b> operator@roadsense.gov</p><p><b>Password:</b> Operator@123</p></details></div></main></div>
+export default function OperatorLoginPage() {
+  const { login } = useAuth(),
+    navigate = useNavigate()
+  const [email, setEmail] = useState(""),
+    [password, setPassword] = useState(""),
+    [show, setShow] = useState(false),
+    [error, setError] = useState(""),
+    [loading, setLoading] = useState(false)
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault()
+    setError("")
+    if (!email || !password) {
+      setError("Enter your official email and password.")
+      return
+    }
+    setLoading(true)
+    setTimeout(() => {
+      if (email === "operator@roadsense.gov" && password === "Operator@123") {
+        login("operator", "Municipal Operator")
+        navigate("/map")
+      } else {
+        setError("Invalid official email or password.")
+        setLoading(false)
+      }
+    }, 500)
+  }
+  return (
+    <div className="operator-login">
+      <section className="operator-brand-panel">
+        <div className="brand">
+          <span>RS</span>
+          <div>
+            <b>RoadSense</b>
+            <small>Municipal command</small>
+          </div>
+        </div>
+        <div>
+          <Building2 />
+          <p className="eyebrow">Authorized personnel</p>
+          <h1>Road maintenance intelligence for faster civic response.</h1>
+          <p>
+            Secure access to operations, AI triage, SLA accountability and
+            corridor planning.
+          </p>
+        </div>
+        <span>
+          <ShieldCheck />
+          Municipal systems · Secure prototype
+        </span>
+      </section>
+      <main>
+        <Link className="back-link" to="/">
+          <ArrowLeft />
+          Back to public reporting
+        </Link>
+        <div className="operator-form">
+          <p className="eyebrow">Operator access</p>
+          <h1>Sign in to command</h1>
+          <p>Use your official municipal credentials.</p>
+          <form className="login-form" onSubmit={submit}>
+            <label>
+              Official email
+              <input
+                type="email"
+                autoComplete="username"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="name@roadsense.gov"
+              />
+            </label>
+            <label>
+              Password
+              <div className="password-field">
+                <input
+                  type={show ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Enter password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow(!show)}
+                  aria-label={show ? "Hide password" : "Show password"}
+                >
+                  {show ? <EyeOff /> : <Eye />}
+                </button>
+              </div>
+            </label>
+            <a className="forgot-link" href="#forgot">
+              Forgot password?
+            </a>
+            <div className="login-error" aria-live="polite">
+              {error}
+            </div>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+          <details className="demo-access">
+            <summary>Demo access</summary>
+            <p>
+              <b>Email:</b> operator@roadsense.gov
+            </p>
+            <p>
+              <b>Password:</b> Operator@123
+            </p>
+          </details>
+        </div>
+      </main>
+    </div>
+  )
 }
