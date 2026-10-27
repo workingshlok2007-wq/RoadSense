@@ -63,11 +63,11 @@ export default function AppShell() {
               to={to}
               className={({ isActive }) =>
                 isActive &&
-                (to.includes("?")
-                  ? location.search === "?tab=sla"
-                  : to === "/triage"
-                    ? location.search !== "?tab=sla"
-                    : true)
+                  (to.includes("?")
+                    ? location.search === "?tab=sla"
+                    : to === "/triage"
+                      ? location.search !== "?tab=sla"
+                      : true)
                   ? "active"
                   : ""
               }
@@ -78,16 +78,6 @@ export default function AppShell() {
             </NavLink>
           ))}
         </nav>
-        <div className="side-actions">
-          <NavLink to="/accessibility">
-            <Accessibility />
-            Accessibility
-          </NavLink>
-          <Button onClick={() => setWalk(true)}>Demo walkthrough</Button>
-          <Button className="ghost" onClick={reset}>
-            <RotateCcw /> Reset demo
-          </Button>
-        </div>
       </aside>
       <div className="workspace">
         <header className="topbar">
@@ -144,21 +134,6 @@ export default function AppShell() {
             <Button className="icon close" onClick={() => setWalk(false)}>
               <X />
             </Button>
-            <p className="eyebrow">Demo walkthrough</p>
-            <h2 id="walk-title">Start from the role selection page</h2>
-            {[
-              "Citizen: any 10-digit phone, OTP 123456",
-              "Operator: operator@roadsense.gov / Operator@123",
-              "Field Crew: CREW-017 / PIN 4821",
-              "Citizen submits a photo; operator sees it in triage",
-              "Crew verifies the repair; operator closes it",
-            ].map((item, index) => (
-              <p className="walk" key={item}>
-                <CheckCircle2 />
-                <b>{index + 1}</b>
-                {item}
-              </p>
-            ))}
           </div>
         </div>
       )}

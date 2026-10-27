@@ -6,8 +6,8 @@ import path from "node:path"
 
 const siteConfiguration = readSiteConfiguration()
 
-function readSiteConfiguration(): FigmaSiteConfiguration {
-  const configPath = path.resolve(import.meta.dirname, ".figma/make/site.json")
+function readSiteConfiguration(): SiteConfiguration {
+  const configPath = path.resolve(import.meta.dirname, ".site/make/site.json")
 
   if (!fs.existsSync(configPath)) {
     return {}
@@ -16,7 +16,7 @@ function readSiteConfiguration(): FigmaSiteConfiguration {
   try {
     return JSON.parse(
       fs.readFileSync(configPath, "utf8"),
-    ) as FigmaSiteConfiguration
+    ) as SiteConfiguration
   } catch {
     return {}
   }
@@ -24,12 +24,11 @@ function readSiteConfiguration(): FigmaSiteConfiguration {
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // .figma/make/deploy-preview passes `--mode development` for cached-preview builds.
   const emitSourcemaps = mode === "development"
 
   return {
-    base: process.env.FIGMA_PUBLIC_URL
-      ? `${process.env.FIGMA_PUBLIC_URL}/`
+    base: process.env.site_PUBLIC_URL
+      ? `${process.env.site_PUBLIC_URL}/`
       : "/",
     build: {
       sourcemap: emitSourcemaps ? "inline" : false,
@@ -38,11 +37,11 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      figmaSiteConfiguration(siteConfiguration),
-      figmaErrorOverlayReplay(),
-      figmaReactRefreshBoundaryFallback(),
-      figmaMakeKitPlugin({ storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}" }),
-      figmaLinkedPackageSourcemaps(),
+      siteSiteConfiguration(siteConfiguration),
+      siteErrorOverlayReplay(),
+      siteReactRefreshBoundaryFallback(),
+      siteMakeKitPlugin({ storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}" }),
+      siteLinkedPackageSourcemaps(),
     ],
     resolve: {
       alias: {
@@ -50,7 +49,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      host: process.env.FIGMA_DEV_SERVER_HOST || "0.0.0.0",
+      host: process.env.site_DEV_SERVER_HOST || "0.0.0.0",
       port: parseInt(process.env.PORT || "8443"),
       strictPort: true,
       proxy: {
@@ -60,17 +59,17 @@ export default defineConfig(({ mode }) => {
         },
       },
       watch: {
-        ignored: ["**/.figma/**"],
+        ignored: ["**/.site/**"],
       },
     },
     preview: {
-      host: process.env.FIGMA_DEV_SERVER_HOST || "0.0.0.0",
+      host: process.env.site_DEV_SERVER_HOST || "0.0.0.0",
       port: parseInt(process.env.PORT || "8443"),
     },
   }
 })
 
-type FigmaSiteConfiguration = {
+type SiteConfiguration = {
   title?: string
   description?: string
   language?: string
@@ -97,8 +96,10 @@ type FigmaSiteConfiguration = {
   }
 }
 
-/** Applies /.figma/make/site.json to the generated document shell. */
-function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
+type siteSiteConfiguration = SiteConfiguration
+
+/** Applies /.site/make/site.json to the generated document shell. */
+function siteSiteConfiguration(config: SiteConfiguration): Plugin {
   function sanitizeHtmlValue(value: string | undefined): string {
     return value?.replace(/[^a-zA-Z0-9_-]/g, "") || ""
   }
@@ -131,7 +132,7 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
     config.robots?.index === false ? "User-agent: *\nDisallow: /\n" : ""
 
   return {
-    name: "figma-site-configuration",
+    name: "site-site-configuration",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         if (!robotsTxt || req.url?.split("?")[0] !== "/robots.txt")
@@ -154,16 +155,16 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
       order: "pre",
       handler(html) {
         let result = html
-        result = replaceHtmlCommentSlot(result, "figma:lang", language)
+        result = replaceHtmlCommentSlot(result, "site:lang", language)
         result = replaceHtmlCommentSlot(
           result,
-          "figma:title",
+          "site:title",
           escapeHtmlText(title),
         )
-        result = replaceHtmlCommentSlot(result, "figma:head-start", headStart)
-        result = replaceHtmlCommentSlot(result, "figma:head-end", headEnd)
-        result = replaceHtmlCommentSlot(result, "figma:body-start", bodyStart)
-        result = replaceHtmlCommentSlot(result, "figma:body-end", bodyEnd)
+        result = replaceHtmlCommentSlot(result, "site:head-start", headStart)
+        result = replaceHtmlCommentSlot(result, "site:head-end", headEnd)
+        result = replaceHtmlCommentSlot(result, "site:body-start", bodyStart)
+        result = replaceHtmlCommentSlot(result, "site:body-end", bodyEnd)
 
         const tags: HtmlTagDescriptor[] = []
         if (description) {
@@ -242,7 +243,7 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
             {
               tag: "style",
               children: `
-  .figma-bypass-link {
+  .site-bypass-link {
     position: fixed;
     top: 8px;
     left: 8px;
@@ -255,7 +256,7 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
     font: 600 14px/1.2 system-ui, sans-serif;
     text-decoration: none;
   }
-  .figma-bypass-link:focus {
+  .site-bypass-link:focus {
     transform: translateY(0);
   }
 `,
@@ -263,7 +264,7 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
             },
             {
               tag: "a",
-              attrs: { class: "figma-bypass-link", href: "#root" },
+              attrs: { class: "site-bypass-link", href: "#root" },
               children: "Skip to content",
               injectTo: "body-prepend",
             },
@@ -292,9 +293,9 @@ function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
  * `update` or `full-reload` so a stale overlay can't survive a
  * fixed build.
  */
-function figmaErrorOverlayReplay(): Plugin {
+function siteErrorOverlayReplay(): Plugin {
   return {
-    name: "figma-error-overlay-replay",
+    name: "site-error-overlay-replay",
     apply: "serve",
     configureServer(server) {
       let lastError: object | null = null
@@ -336,14 +337,14 @@ function figmaErrorOverlayReplay(): Plugin {
  * mounted component family. React reports a successful refresh while leaving
  * the old tree mounted until the page is reloaded.
  */
-function figmaReactRefreshBoundaryFallback(): Plugin {
+function siteReactRefreshBoundaryFallback(): Plugin {
   type ModuleNode = import("vite").ModuleNode
   const hadRefreshBoundary = new Map<string, boolean>()
   const lostRefreshBoundaries = new Set<string>()
   let sendFullReload: (() => void) | null = null
 
   return {
-    name: "figma-react-refresh-boundary-fallback",
+    name: "site-react-refresh-boundary-fallback",
     apply: "serve",
     enforce: "post",
     configureServer(server) {
@@ -398,24 +399,24 @@ function figmaReactRefreshBoundaryFallback(): Plugin {
 }
 
 /**
- * Serves a blank render-target page at /.figma/make/kit.html that
- * the Figma preview script drives directly. The page exposes a
+ * Serves a blank render-target page at /.site/make/kit.html that
+ * the site preview script drives directly. The page exposes a
  * registry of every file matching `storiesGlob` on
- * window.__FIGMA__.stories so the design surface can dynamically
+ * window.__site__.stories so the design surface can dynamically
  * import + mount each entry into its own grid view.
  *
  * Dev-only: `apply: 'serve'` gates the plugin to `vite dev`. Prod
  * builds (`vite build`) skip it entirely so the route doesn't leak
  * into shipped bundles.
  */
-function figmaMakeKitPlugin(options: {
+function siteMakeKitPlugin(options: {
   storiesGlob: string | string[]
 }): Plugin {
   const storiesGlob = Array.isArray(options.storiesGlob)
     ? options.storiesGlob
     : [options.storiesGlob]
-  const ROUTE = "/.figma/make/kit.html"
-  const VIRTUAL_ID = "virtual:figma-stories"
+  const ROUTE = "/.site/make/kit.html"
+  const VIRTUAL_ID = "virtual:site-stories"
   const RESOLVED_ID = "\0" + VIRTUAL_ID
   const STORIES_MODULE = `export const stories = import.meta.glob(${JSON.stringify(storiesGlob)})`
   const HTML_BOOTSTRAP = `<!doctype html>
@@ -425,17 +426,17 @@ function figmaMakeKitPlugin(options: {
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
-<div id="figma-make-kit-root"></div>
+<div id="site-make-kit-root"></div>
 <script type="module">
-  import { stories } from 'virtual:figma-stories'
-  window.__FIGMA__ = Object.assign(window.__FIGMA__ ?? {}, { stories })
-  window.dispatchEvent(new CustomEvent('figma.ready'))
+  import { stories } from 'virtual:site-stories'
+  window.__site__ = Object.assign(window.__site__ ?? {}, { stories })
+  window.dispatchEvent(new CustomEvent('site.ready'))
 </script>
 </body>
 </html>`
 
   return {
-    name: "figma-make-kit",
+    name: "site-make-kit",
     apply: "serve",
     resolveId(id) {
       if (id === VIRTUAL_ID) return RESOLVED_ID
@@ -467,7 +468,7 @@ function figmaMakeKitPlugin(options: {
  * installed packages appear in sourcemaps. Vite otherwise reports their real
  * path, such as `libraries/<name>/`.
  */
-function figmaLinkedPackageSourcemaps(): Plugin {
+function siteLinkedPackageSourcemaps(): Plugin {
   const packageJson = JSON.parse(
     fs.readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf8"),
   )
@@ -512,7 +513,7 @@ function figmaLinkedPackageSourcemaps(): Plugin {
           mapDir: path.dirname(mapFile),
         }
       }
-    } catch {}
+    } catch { }
     // Without a usable input map, map every line to itself.
     const mappings = code.split("\n").map((_, i) => (i ? "AACA" : "AAAA"))
     const map = {
@@ -526,7 +527,7 @@ function figmaLinkedPackageSourcemaps(): Plugin {
   }
 
   return {
-    name: "figma-linked-package-sourcemaps",
+    name: "site-linked-package-sourcemaps",
     enforce: "pre",
     load(id) {
       // Leave queried imports such as ?raw and ?url to Vite's own loaders.
