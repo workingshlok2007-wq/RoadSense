@@ -20,6 +20,10 @@ export type Report = {
   description?: string
   tagId?: string
   _id?: string
+  /** ISO timestamp when crew marked this as Resolved */
+  resolvedAt?: string
+  /** Base64 data URL or URL of the after-repair photo uploaded by crew */
+  afterPhoto?: string
 }
 
 const severities: Severity[] = ["Low", "Medium", "High"]

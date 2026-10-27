@@ -29,6 +29,11 @@ export default function MapPage() {
       ),
     [reports, severity, district, hazard],
   )
+  // Only active (non-Resolved) reports appear on the map
+  const activeOnMap = useMemo(
+    () => filtered.filter((r) => r.status !== "Resolved"),
+    [filtered],
+  )
   if (loading)
     return (
       <>
@@ -76,7 +81,7 @@ export default function MapPage() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <span>
-            <b>{filtered.length}</b> results
+            <b>{activeOnMap.length}</b> active on map
           </span>
           <Button
             className="ghost"
@@ -132,9 +137,9 @@ export default function MapPage() {
       )}
       <div className="map-layout">
         <div className="map-card">
-          {filtered.length ? (
+          {activeOnMap.length ? (
             <MapView
-              reports={filtered}
+              reports={activeOnMap}
               onSelect={setSelected}
               geofences={geo}
             />
@@ -212,6 +217,72 @@ export default function MapPage() {
           </Card>
         )}
       </div>
+
+      {/* ── Works Done Recently ── */}
+      <WorksDoneRecently reports={reports} />
     </>
+  )
+}
+
+function WorksDoneRecently({ reports }: { reports: Report[] }) {
+  const resolved = useMemo(
+    () =>
+      reports
+        .filter((r) => r.status === "Resolved")
+        .sort((a, b) => {
+          const ta = a.resolvedAt ? new Date(a.resolvedAt).getTime() : 0
+          const tb = b.resolvedAt ? new Date(b.resolvedAt).getTime() : 0
+          return tb - ta
+        }),
+    [reports],
+  )
+
+  if (resolved.length === 0) return null
+
+  return (
+    <section className="works-done-section" aria-labelledby="works-done-title">
+      <div className="works-done-header">
+        <div>
+          <h2 id="works-done-title">Works Done Recently</h2>
+          <p>Potholes and hazards confirmed repaired by field crews.</p>
+        </div>
+        <Badge tone="success">{resolved.length} resolved</Badge>
+      </div>
+      <div className="works-done-grid">
+        {resolved.map((r) => (
+          <article key={r.id} className="work-card">
+            <div className="work-card-img-wrap">
+              <img
+                src={r.afterPhoto || r.photo}
+                alt={`${r.hazardType} after repair`}
+                className="work-card-img"
+              />
+              {r.afterPhoto && (
+                <span className="work-card-after-badge">After repair ✓</span>
+              )}
+            </div>
+            <div className="work-card-body">
+              <div className="spread">
+                <b className="work-card-id">{r.id}</b>
+                <Badge tone="success">Resolved</Badge>
+              </div>
+              <p className="work-card-type">{r.hazardType}</p>
+              <p className="work-card-district">{r.district} district</p>
+              {r.resolvedAt && (
+                <p className="work-card-time">
+                  ✓ Resolved{" "}
+                  {new Date(r.resolvedAt).toLocaleString([], {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   )
 }

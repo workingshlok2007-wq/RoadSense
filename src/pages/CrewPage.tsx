@@ -1,22 +1,74 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import {
   Camera,
   CheckCircle2,
   MapPin,
   Navigation,
   RotateCcw,
+  Upload,
+  X,
 } from "lucide-react"
 import { useDemo } from "../context/DemoContext"
 import { Badge, Button, Card, Heading } from "../components/ui"
+
+// Convert File → compressed Base64 Data URL (same approach as ReportPage)
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        let w = img.width,
+          h = img.height
+        const max = 1200
+        if (w > max || h > max) {
+          if (w > h) {
+            h = Math.round((h * max) / w)
+            w = max
+          } else {
+            w = Math.round((w * max) / h)
+            h = max
+          }
+        }
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext("2d")
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h)
+          resolve(canvas.toDataURL("image/jpeg", 0.82))
+        } else {
+          resolve(e.target?.result as string)
+        }
+      }
+      img.onerror = () => resolve(e.target?.result as string)
+      img.src = e.target?.result as string
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function CrewPage() {
   const { reports, update } = useDemo()
   const task = reports.find((r) => r.status !== "Resolved") || reports[0]
+
   const [photo1, setP1] = useState(false),
     [photo2, setP2] = useState(false),
     [severity, setSeverity] = useState(""),
     [error, setError] = useState(false),
     [authorized, setAuthorized] = useState(false)
+
+  // After-repair resolution state
+  const [afterPhotoUrl, setAfterPhotoUrl] = useState<string | null>(null)
+  const [afterPhotoName, setAfterPhotoName] = useState("")
+  const [converting, setConverting] = useState(false)
+  const [resolving, setResolving] = useState(false)
+  const [resolved, setResolved] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const ready = photo1 && photo2 && severity
+
   const upload = (which: 1 | 2) => {
     if (which === 2 && !error) {
       setError(true)
@@ -24,10 +76,47 @@ export default function CrewPage() {
     }
     which === 1 ? setP1(true) : setP2(true)
   }
+
   const auth = () => {
     setAuthorized(true)
     update(task.id, { status: "Crew Dispatched" })
   }
+
+  const handleAfterPhotoFile = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setConverting(true)
+    try {
+      const dataUrl = await fileToDataUrl(file)
+      setAfterPhotoUrl(dataUrl)
+      setAfterPhotoName(file.name)
+    } catch {
+      // ignore
+    } finally {
+      setConverting(false)
+      e.target.value = ""
+    }
+  }
+
+  const clearAfterPhoto = () => {
+    setAfterPhotoUrl(null)
+    setAfterPhotoName("")
+  }
+
+  const resolveTask = async () => {
+    if (!afterPhotoUrl) return
+    setResolving(true)
+    await update(task.id, {
+      status: "Resolved",
+      resolvedAt: new Date().toISOString(),
+      afterPhoto: afterPhotoUrl,
+    })
+    setResolving(false)
+    setResolved(true)
+  }
+
   return (
     <>
       <Heading sub="Guided, evidence-based verification for municipal field teams">
@@ -142,16 +231,91 @@ export default function CrewPage() {
               onClick={auth}
             >
               {authorized
-                ? "Equipment authorized"
+                ? "Equipment authorized ✓"
                 : "Authorize heavy equipment"}
             </Button>
-            {authorized && (
-              <Button
-                className="repair"
-                onClick={() => update(task.id, { status: "Resolved" })}
-              >
-                <CheckCircle2 /> Add after-repair photo & resolve
-              </Button>
+
+            {/* ── After-repair resolution flow ── */}
+            {authorized && !resolved && (
+              <div className="after-repair-section">
+                <div className="after-repair-header">
+                  <Camera />
+                  <span>
+                    <b>3. After-repair photo</b>
+                    <small>
+                      Upload a photo of the filled pothole to mark as complete
+                      and remove it from the live map.
+                    </small>
+                  </span>
+                </div>
+
+                {!afterPhotoUrl ? (
+                  <div className="after-photo-actions">
+                    <label className="after-photo-btn">
+                      <Camera />
+                      Take photo
+                      <input
+                        className="sr-only"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        capture="environment"
+                        onChange={handleAfterPhotoFile}
+                        ref={fileInputRef}
+                      />
+                    </label>
+                    <label className="after-photo-btn secondary">
+                      <Upload />
+                      Upload
+                      <input
+                        className="sr-only"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleAfterPhotoFile}
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <div className="after-photo-preview">
+                    <img src={afterPhotoUrl} alt="After repair" />
+                    <button
+                      className="after-photo-remove"
+                      onClick={clearAfterPhoto}
+                      aria-label="Remove after photo"
+                    >
+                      <X />
+                    </button>
+                    <small className="after-photo-name">{afterPhotoName}</small>
+                  </div>
+                )}
+
+                {converting && (
+                  <p className="disabled-reason">Processing photo…</p>
+                )}
+
+                <Button
+                  className="repair"
+                  disabled={!afterPhotoUrl || converting || resolving}
+                  onClick={resolveTask}
+                >
+                  <CheckCircle2 />
+                  {resolving
+                    ? "Submitting…"
+                    : "Submit & resolve — remove from map"}
+                </Button>
+              </div>
+            )}
+
+            {/* ── Resolved confirmation ── */}
+            {resolved && (
+              <div className="resolved-confirm">
+                <CheckCircle2 />
+                <div>
+                  <b>Pothole marked as resolved!</b>
+                  <small>
+                    Removed from live map · added to Works Done Recently
+                  </small>
+                </div>
+              </div>
             )}
           </div>
         </div>
