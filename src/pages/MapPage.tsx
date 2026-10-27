@@ -6,13 +6,14 @@ import {
   X,
   Clock3,
   Camera,
+  RotateCcw,
 } from "lucide-react"
 import { useDemo } from "../context/DemoContext"
 import type { Report } from "../data/mockData"
 import { MapView } from "../components/MapView"
 import { Badge, Button, Card, Empty, Heading, Skeleton } from "../components/ui"
 export default function MapPage() {
-  const { reports, loading, error, weather, setWeather } = useDemo()
+  const { reports, loading, error, weather, setWeather, refresh } = useDemo()
   const [selected, setSelected] = useState<Report | null>(null),
     [geo, setGeo] = useState(true)
   const [severity, setSeverity] = useState("All"),
@@ -73,9 +74,25 @@ export default function MapPage() {
             </label>
           ))}
         </div>
-        <span>
-          <b>{filtered.length}</b> results
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <span>
+            <b>{filtered.length}</b> results
+          </span>
+          <Button
+            className="ghost"
+            style={{
+              padding: "0.3rem 0.6rem",
+              fontSize: "0.75rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+            }}
+            onClick={refresh}
+            title="Re-fetch latest reports from MongoDB"
+          >
+            <RotateCcw style={{ width: 13, height: 13 }} /> Sync DB
+          </Button>
+        </div>
       </div>
       <Card className={`weather ${weather ? "active" : ""}`}>
         <div>

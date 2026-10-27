@@ -360,6 +360,56 @@ app.patch("/api/road-tags/:id", async (req, res) => {
   }
 })
 
+// PUT /api/road-tags/:id - Update or replace road tag in MongoDB
+app.put("/api/road-tags/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+    let query = {}
+    if (mongoose.isValidObjectId(id)) {
+      query = { $or: [{ _id: id }, { tagId: id }] }
+    } else {
+      query = { $or: [{ tagId: id }, { id: id }] }
+    }
+
+    const updatedTag = await RoadTag.findOneAndUpdate(
+      query,
+      { $set: req.body },
+      { new: true, upsert: true, runValidators: false },
+    )
+    console.log(`📌 PUT updated road tag ${id} in MongoDB!`)
+    res.status(200).json(formatTag(updatedTag))
+  } catch (error) {
+    console.error("Error in PUT road tag:", error)
+    res
+      .status(400)
+      .json({ error: "Failed to update road tag", details: error.message })
+  }
+})
+
+// Alias: PUT /api/tags/:id
+app.put("/api/tags/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+    let query = {}
+    if (mongoose.isValidObjectId(id)) {
+      query = { $or: [{ _id: id }, { tagId: id }] }
+    } else {
+      query = { $or: [{ tagId: id }, { id: id }] }
+    }
+
+    const updatedTag = await RoadTag.findOneAndUpdate(
+      query,
+      { $set: req.body },
+      { new: true, upsert: true, runValidators: false },
+    )
+    res.status(200).json(formatTag(updatedTag))
+  } catch (error) {
+    res
+      .status(400)
+      .json({ error: "Failed to update tag", details: error.message })
+  }
+})
+
 // DELETE /api/road-tags/:id - Delete a road tag
 app.delete("/api/road-tags/:id", async (req, res) => {
   try {

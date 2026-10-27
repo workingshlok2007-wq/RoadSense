@@ -35,7 +35,7 @@ const distanceInMeters = (a: GeoPoint, b: GeoPoint) => {
 }
 
 export function ReporterProvider({ children }: { children: ReactNode }) {
-  const { reports, add } = useDemo()
+  const { reports, add, refresh } = useDemo()
   const recentSubmissions = useRef<number[]>([])
 
   const submitReport = async ({
@@ -92,6 +92,7 @@ export function ReporterProvider({ children }: { children: ReactNode }) {
     }
 
     add(finalReport)
+    refresh().catch(() => {})
     recentSubmissions.current.push(now)
     return finalReport.id
   }
